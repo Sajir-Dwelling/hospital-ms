@@ -1,0 +1,97 @@
+/* ── Badges ───────────────────────────────────────────────────── */
+.badge { display:inline-block; padding:3px 10px; border-radius:99px; font-size:12px; font-weight:600; }
+.badgeCompleted   { background:#EFF6FF; color:#1D4ED8; }
+.badgeInProgress  { background:#ECFDF5; color:#059669; }
+.badgeWaiting     { background:#FFFBEB; color:#D97706; }
+.badgeUpcoming    { background:#F5F3FF; color:#7C3AED; }
+.badgeCancelled   { background:#FEF2F2; color:#DC2626; }
+.badgeActive      { background:#ECFDF5; color:#059669; }
+.badgeAdmitted    { background:#EFF6FF; color:#1D4ED8; }
+.badgeDischarged  { background:#F9FAFB; color:#6B7280; }
+
+/* ── Layout helpers ───────────────────────────────────────────── */
+.sectionHeader { display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; }
+.sectionTitle { font-family:var(--font-serif); font-size:1.15rem; color:var(--navy); }
+.sectionLink { font-size:13px; color:var(--blue); font-weight:600; background:none; border:none; cursor:pointer; }
+.sectionLink:hover { text-decoration:underline; }
+
+.card { background:white; border:1px solid var(--border); border-radius:14px; box-shadow:0 1px 4px rgba(11,20,55,.06); }
+
+/* ── Toolbar ──────────────────────────────────────────────────── */
+.toolbar { display:flex; gap:12px; margin-bottom:20px; flex-wrap:wrap; align-items:center; }
+.searchBox {
+  flex:1; min-width:180px; height:40px;
+  border:1.5px solid var(--border); border-radius:10px;
+  padding:0 14px; font-size:14px; font-family:var(--font-sans);
+  background:white; outline:none;
+}
+.searchBox:focus { border-color:var(--blue); }
+.filterSelect {
+  height:40px; border:1.5px solid var(--border); border-radius:10px;
+  padding:0 12px; font-size:14px; font-family:var(--font-sans);
+  background:white; outline:none; cursor:pointer;
+}
+
+/* ── Table ────────────────────────────────────────────────────── */
+.tableWrap { overflow-x:auto; }
+.table { width:100%; border-collapse:collapse; font-size:14px; }
+.table th {
+  background:var(--surface); padding:12px 16px;
+  text-align:left; font-size:12px; font-weight:600;
+  text-transform:uppercase; letter-spacing:.5px;
+  color:var(--muted); border-bottom:1px solid var(--border); white-space:nowrap;
+}
+.table td { padding:14px 16px; border-bottom:1px solid var(--border); color:var(--text); }
+.table tr:last-child td { border-bottom:none; }
+.table tbody tr:hover { background:var(--surface); }
+
+/* ── Empty state ──────────────────────────────────────────────── */
+.emptyState { text-align:center; padding:48px 20px; color:var(--muted); font-size:14px; }
+.emptyState span { font-size:36px; display:block; margin-bottom:12px; }
+
+/* ── Modal ────────────────────────────────────────────────────── */
+.modalOverlay {
+  position:fixed; inset:0; background:rgba(11,20,55,.45);
+  backdrop-filter:blur(4px); z-index:200;
+  display:grid; place-items:center; padding:20px;
+}
+.modal {
+  background:white; border-radius:18px; width:100%; max-width:540px;
+  box-shadow:0 20px 60px rgba(11,20,55,.2); max-height:90vh; overflow-y:auto;
+}
+.modalHeader {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:20px 24px; border-bottom:1px solid var(--border);
+  position:sticky; top:0; background:white; z-index:1;
+}
+.modalHeader h3 { font-family:var(--font-serif); font-size:1.2rem; color:var(--navy); }
+.modalClose { background:none; border:none; font-size:18px; color:var(--muted); cursor:pointer; padding:4px; line-height:1; }
+.modalClose:hover { color:var(--danger); }
+.modalBody { padding:24px; display:flex; flex-direction:column; gap:16px; }
+.modalRow { display:flex; gap:12px; }
+.modalRow .modalField { flex:1; }
+.modalField { display:flex; flex-direction:column; gap:6px; }
+.modalField label { font-size:13px; font-weight:600; color:var(--navy); }
+.modalField input, .modalField select, .modalField textarea {
+  border:1.5px solid var(--border); border-radius:10px;
+  padding:10px 12px; font-size:14px; font-family:var(--font-sans);
+  color:var(--text); background:white; outline:none; width:100%;
+  transition:border-color .2s;
+}
+.modalField input:focus, .modalField select:focus, .modalField textarea:focus { border-color:var(--blue); }
+.modalField textarea { resize:vertical; min-height:90px; }
+.modalFooter {
+  display:flex; gap:10px; justify-content:flex-end;
+  padding:16px 24px; border-top:1px solid var(--border);
+}
+.cancelBtn {
+  padding:10px 20px; border-radius:10px; border:1.5px solid var(--border);
+  background:white; color:var(--muted); font-size:14px; font-weight:600;
+  font-family:var(--font-sans); cursor:pointer;
+}
+.saveBtn {
+  padding:10px 24px; border-radius:10px; background:var(--blue);
+  color:white; border:none; font-size:14px; font-weight:600;
+  font-family:var(--font-sans); cursor:pointer; transition:background .15s;
+}
+.saveBtn:hover { background:var(--navy); }
