@@ -8,7 +8,7 @@ const NAV = [
     section: 'Main',
     items: [
       { key: 'overview',      label: 'Dashboard',    icon: '🏠' },
-      { key: 'appointments',  label: 'Appointments',  icon: '📅', badge: '6' },
+      { key: 'appointments',  label: 'Appointments',  icon: '📅' },
     ],
   },
   {
