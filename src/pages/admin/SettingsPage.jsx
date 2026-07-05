@@ -75,29 +75,7 @@ const handleSave = async () => {
         </div>
       </div>
 
-      {/* Security */}
-      <div className={s.settingsCard}>
-        <div className={s.settingsCardHeader}>
-          <span>🔒</span>
-          <div>
-            <div className={s.settingsCardTitle}>Security</div>
-            <div className={s.settingsCardSub}>Manage access and password settings</div>
-          </div>
-        </div>
-        <div className={s.settingsFields}>
-          {[
-            { label:'Current Password', key:'cp', type:'password', placeholder:'••••••••' },
-            { label:'New Password',     key:'np', type:'password', placeholder:'••••••••' },
-            { label:'Confirm Password', key:'cnp', type:'password', placeholder:'••••••••' },
-          ].map(({ label, key, type, placeholder }) => (
-            <div className={s.modalField} key={key}>
-              <label>{label}</label>
-              <input type={type} placeholder={placeholder} />
-            </div>
-          ))}
-        </div>
-      </div>
-	
+
       <ChangePasswordSection />
 
       {/* Save */}
