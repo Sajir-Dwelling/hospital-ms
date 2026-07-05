@@ -13,6 +13,7 @@ export function AuthProvider({ children }) {
 
   // Real API login
   const login = async (email, password) => {
+    localStorage.removeItem('hms_user');
     const res = await authAPI.login({ email, password });
     const userData = { ...res.data.user, token: res.data.token };
     localStorage.setItem('hms_user', JSON.stringify(userData));
