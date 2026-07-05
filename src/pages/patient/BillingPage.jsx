@@ -80,7 +80,11 @@ export default function BillingPage() {
                   <td style={{ padding: '14px 16px' }}>
                     <div style={{ display: 'flex', gap: 6 }}>
                       <button style={{ padding: '4px 12px', borderRadius: 6, border: 'none', background: '#EFF6FF', color: '#1D4ED8', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--font-sans)' }}>Download</button>
-                    </div>
+		      {inv.status === 'Pending' && (
+  			<button style={{ padding:'4px 12px', borderRadius:6, border:'none', background:'#ECFDF5', color:'#059669', fontSize:12, fontWeight:600, cursor:'pointer', fontFamily:'var(--font-sans)' }}>Pay Now</button>
+			)}                    
+
+		    </div>
                   </td>
                 </tr>
               ))}
