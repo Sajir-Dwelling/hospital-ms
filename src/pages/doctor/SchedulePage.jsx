@@ -139,6 +139,10 @@ export default function SchedulePage({ onNavigate }) {
           {/* Actions */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {selected.status === 'Pending' && (
+              <button onClick={() => handleStatus(selected._id, 'Confirmed')}
+                style={actionBtn('#ECFDF5', '#059669')}>Confirm Appointment</button>
+            )}
+            {['Pending', 'Confirmed'].includes(selected.status) && (
               <button onClick={() => handleStatus(selected._id, 'In Progress')}
                 style={actionBtn('var(--blue)', 'white')}>Start Consultation</button>
             )}
