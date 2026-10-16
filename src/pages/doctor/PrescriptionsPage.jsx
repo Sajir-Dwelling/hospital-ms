@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { prescriptionAPI, appointmentAPI } from '../../services/api';
+import API, { prescriptionAPI, appointmentAPI } from '../../services/api';
 
 export default function PrescriptionsPage() {
   const [tab, setTab] = useState('write');
@@ -10,7 +10,9 @@ export default function PrescriptionsPage() {
 
   // Write form state
   const [form, setForm] = useState({ patientId: '', diagnosis: '', notes: '' });
-  const [medicines, setMedicines] = useState([{ name: '', dose: '', freq: '', duration: '' }]);
+  const EMPTY_MED = { name: '', dose: '', freq: '', duration: '', medicine: '', quantity: '' };
+  const [medicines, setMedicines] = useState([{ ...EMPTY_MED }]);
+  const [inventory, setInventory] = useState([]);
   const [saving, setSaving] = useState(false);
   const [savedMsg, setSavedMsg] = useState('');
 
@@ -23,6 +25,10 @@ export default function PrescriptionsPage() {
       }).catch(() => setLoading(false));
     }
     if (tab === 'write') {
+      // Medicines available in the pharmacy (in stock, not expired)
+      API.get('/medicines', { params: { available: true } })
+        .then(res => setInventory(res.data.medicines || []))
+        .catch(() => setInventory([]));
       // Load unique patients from appointments
       appointmentAPI.getAll().then(res => {
         const seen = new Set();
@@ -38,7 +44,16 @@ export default function PrescriptionsPage() {
     }
   }, [tab]);
 
-  const addMedicine = () => setMedicines(prev => [...prev, { name: '', dose: '', freq: '', duration: '' }]);
+  const addMedicine = () => setMedicines(prev => [...prev, { ...EMPTY_MED }]);
+
+  // Pick from inventory: fills the name and remembers the medicine id
+  const pickInventory = (i, id) => {
+    const item = inventory.find(x => x._id === id);
+    setMedicines(prev => prev.map((m, idx) => idx !== i ? m : (
+      item ? { ...m, medicine: item._id, name: item.name, quantity: m.quantity || 1 }
+           : { ...m, medicine: '', quantity: '' }
+    )));
+  };
   const removeMedicine = (i) => setMedicines(prev => prev.filter((_, idx) => idx !== i));
   const updateMedicine = (i, key, val) => setMedicines(prev => prev.map((m, idx) => idx === i ? { ...m, [key]: val } : m));
 
@@ -46,15 +61,28 @@ export default function PrescriptionsPage() {
     if (!form.patientId || !form.diagnosis) { alert('Patient and diagnosis are required'); return; }
     setSaving(true);
     try {
+      const chosen = medicines.filter(m => m.name);
+      for (const m of chosen) {
+        if (m.medicine) {
+          const item = inventory.find(x => x._id === m.medicine);
+          const qty = Number(m.quantity) || 0;
+          if (qty < 1) { alert(`Enter a quantity for ${m.name}`); setSaving(false); return; }
+          if (item && qty > item.stock) { alert(`Only ${item.stock} of ${m.name} in stock`); setSaving(false); return; }
+        }
+      }
       await prescriptionAPI.create({
         patientId: form.patientId,
         diagnosis: form.diagnosis,
-        medicines: medicines.filter(m => m.name),
+        medicines: chosen.map(m => ({
+          name: m.name, dose: m.dose, freq: m.freq, duration: m.duration,
+          ...(m.medicine ? { medicine: m.medicine, quantity: Number(m.quantity) } : {}),
+        })),
         notes: form.notes,
       });
       setSavedMsg('Prescription saved successfully!');
+      API.get('/medicines', { params: { available: true } }).then(res => setInventory(res.data.medicines || [])).catch(() => {});
       setForm({ patientId: '', diagnosis: '', notes: '' });
-      setMedicines([{ name: '', dose: '', freq: '', duration: '' }]);
+      setMedicines([{ ...EMPTY_MED }]);
       setTimeout(() => setSavedMsg(''), 3000);
     } catch (err) {
       alert(err.message || 'Failed to save prescription');
@@ -125,23 +153,40 @@ export default function PrescriptionsPage() {
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                 {medicines.map((med, i) => (
-                  <div key={i} style={{ border: '1px solid var(--border)', borderRadius: 10, padding: 14, display: 'grid', gridTemplateColumns: '2fr 1fr 2fr 1fr auto', gap: 10, alignItems: 'center' }}>
-                    {[
-                      { key: 'name',     ph: 'Medicine name' },
-                      { key: 'dose',     ph: 'Dose' },
-                      { key: 'freq',     ph: 'Frequency' },
-                      { key: 'duration', ph: 'Duration' },
-                    ].map(({ key, ph }) => (
-                      <input key={key} type="text" placeholder={ph} value={med[key]}
-                        onChange={e => updateMedicine(i, key, e.target.value)}
-                        style={{ ...inputStyle, height: 36 }}
-                        onFocus={e => e.target.style.borderColor = 'var(--blue)'}
-                        onBlur={e => e.target.style.borderColor = 'var(--border)'}
+                  <div key={i} style={{ border: '1px solid var(--border)', borderRadius: 10, padding: 14, display: 'flex', flexDirection: 'column', gap: 10 }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 90px auto', gap: 10, alignItems: 'center' }}>
+                      <select value={med.medicine} onChange={e => pickInventory(i, e.target.value)}
+                        style={{ ...inputStyle, height: 36, cursor: 'pointer' }}>
+                        <option value="">Pick from pharmacy (or type below)</option>
+                        {inventory.map(x => (
+                          <option key={x._id} value={x._id}>{x.name} — {x.stock} in stock</option>
+                        ))}
+                      </select>
+                      <input type="number" min="1" placeholder="Qty" value={med.quantity}
+                        disabled={!med.medicine}
+                        onChange={e => updateMedicine(i, 'quantity', e.target.value)}
+                        style={{ ...inputStyle, height: 36, opacity: med.medicine ? 1 : 0.5 }}
                       />
-                    ))}
-                    {medicines.length > 1 && (
-                      <button onClick={() => removeMedicine(i)} style={{ background: 'none', border: 'none', color: '#DC2626', fontSize: 18, cursor: 'pointer', padding: '0 4px' }}>✕</button>
-                    )}
+                      {medicines.length > 1 ? (
+                        <button onClick={() => removeMedicine(i)} style={{ background: 'none', border: 'none', color: '#DC2626', fontSize: 18, cursor: 'pointer', padding: '0 4px' }}>✕</button>
+                      ) : <span />}
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 2fr 1fr', gap: 10, alignItems: 'center' }}>
+                      {[
+                        { key: 'name',     ph: 'Medicine name' },
+                        { key: 'dose',     ph: 'Dose' },
+                        { key: 'freq',     ph: 'Frequency' },
+                        { key: 'duration', ph: 'Duration' },
+                      ].map(({ key, ph }) => (
+                        <input key={key} type="text" placeholder={ph} value={med[key]}
+                          readOnly={key === 'name' && !!med.medicine}
+                          onChange={e => updateMedicine(i, key, e.target.value)}
+                          style={{ ...inputStyle, height: 36 }}
+                          onFocus={e => e.target.style.borderColor = 'var(--blue)'}
+                          onBlur={e => e.target.style.borderColor = 'var(--border)'}
+                        />
+                      ))}
+                    </div>
                   </div>
                 ))}
               </div>
@@ -204,7 +249,7 @@ export default function PrescriptionsPage() {
                     <div key={i} style={{ border: '1px solid var(--border)', borderRadius: 10, padding: '14px 16px', display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
                       <div>
                         <div style={{ fontSize: 11, color: 'var(--muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: .4, marginBottom: 4 }}>Medicine</div>
-                        <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--navy)' }}>{med.name}</div>
+                        <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--navy)' }}>{med.name}{med.quantity ? ` × ${med.quantity}` : ''}</div>
                       </div>
                       <div>
                         <div style={{ fontSize: 11, color: 'var(--muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: .4, marginBottom: 4 }}>Dose</div>
