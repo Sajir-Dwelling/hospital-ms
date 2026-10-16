@@ -1,5 +1,23 @@
 import { useState, useEffect } from 'react';
+import axios from 'axios';
 import { billingAPI } from '../../services/api';
+
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+
+const authHeader = () => {
+  try {
+    const user = JSON.parse(localStorage.getItem('hms_user') || '{}');
+    return user?.token ? { Authorization: `Bearer ${user.token}` } : {};
+  } catch {
+    return {};
+  }
+};
+
+const MESSAGES = {
+  success:   { text: 'Payment received. Your invoice is now marked Paid.', bg: '#ECFDF5', color: '#059669' },
+  failed:    { text: 'Payment failed. Nothing was marked as paid. Please try again.', bg: '#FEF2F2', color: '#DC2626' },
+  cancelled: { text: 'Payment cancelled.', bg: '#FFFBEB', color: '#D97706' },
+};
 
 function Badge({ status }) {
   const map = {
@@ -16,8 +34,18 @@ export default function BillingPage() {
   const [summary, setSummary] = useState({ total: 0, paid: 0, pending: 0 });
   const [filter, setFilter] = useState('All');
   const [loading, setLoading] = useState(true);
+  const [payingId, setPayingId] = useState(null);
+  const [notice, setNotice] = useState(null);
+  const [error, setError] = useState('');
 
   useEffect(() => {
+    // Coming back from the payment page: show the result, then clean the address bar
+    const result = new URLSearchParams(window.location.search).get('payment');
+    if (result && MESSAGES[result]) {
+      setNotice(MESSAGES[result]);
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+
     billingAPI.getAll().then(res => {
       setInvoices(res.data.invoices);
       setSummary(res.data.summary);
@@ -25,16 +53,39 @@ export default function BillingPage() {
     }).catch(() => setLoading(false));
   }, []);
 
+  const handlePay = async (id) => {
+    setPayingId(id);
+    setError('');
+    try {
+      const res = await axios.post(`${API_URL}/billing/${id}/pay-online`, {}, { headers: authHeader() });
+      window.location.href = res.data.url;
+    } catch (err) {
+      setError(err.response?.data?.message || 'Could not start the payment. Please try again.');
+      setPayingId(null);
+    }
+  };
+
   const filtered = invoices.filter(inv => filter === 'All' || inv.status === filter);
 
   const cards = [
     { label: 'Total Billed', value: `৳${summary.total}`, icon: '💳', color: '#1B4FD8' },
     { label: 'Paid',         value: `৳${summary.paid}`,  icon: '✅', color: '#059669' },
-    { label: 'Pending',      value: `৳${summary.pending}`,icon: '⏳', color: '#D97706' },
+    { label: 'Pending',      value: `৳${summary.pending}`, icon: '⏳', color: '#D97706' },
   ];
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+      {notice && (
+        <div style={{ background: notice.bg, color: notice.color, padding: '12px 16px', borderRadius: 10, fontSize: 14, fontWeight: 600 }}>
+          {notice.text}
+        </div>
+      )}
+      {error && (
+        <div style={{ background: '#FEF2F2', color: '#DC2626', padding: '12px 16px', borderRadius: 10, fontSize: 14, fontWeight: 600 }}>
+          {error}
+        </div>
+      )}
+
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 14 }}>
         {cards.map(c => (
           <div key={c.label} style={{ background: 'white', border: '1px solid var(--border)', borderRadius: 14, padding: '18px 20px', display: 'flex', alignItems: 'center', gap: 14, boxShadow: '0 1px 4px rgba(11,20,55,.06)' }}>
@@ -80,11 +131,16 @@ export default function BillingPage() {
                   <td style={{ padding: '14px 16px' }}>
                     <div style={{ display: 'flex', gap: 6 }}>
                       <button style={{ padding: '4px 12px', borderRadius: 6, border: 'none', background: '#EFF6FF', color: '#1D4ED8', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--font-sans)' }}>Download</button>
-		      {inv.status === 'Pending' && (
-  			<button style={{ padding:'4px 12px', borderRadius:6, border:'none', background:'#ECFDF5', color:'#059669', fontSize:12, fontWeight:600, cursor:'pointer', fontFamily:'var(--font-sans)' }}>Pay Now</button>
-			)}                    
-
-		    </div>
+                      {inv.status === 'Pending' && (
+                        <button
+                          onClick={() => handlePay(inv._id)}
+                          disabled={payingId === inv._id}
+                          style={{ padding: '4px 12px', borderRadius: 6, border: 'none', background: '#ECFDF5', color: '#059669', fontSize: 12, fontWeight: 600, cursor: payingId === inv._id ? 'wait' : 'pointer', opacity: payingId === inv._id ? 0.6 : 1, fontFamily: 'var(--font-sans)' }}
+                        >
+                          {payingId === inv._id ? 'Redirecting…' : 'Pay Now'}
+                        </button>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}
