@@ -5,6 +5,7 @@ import AppointmentsPage from './AppointmentsPage';
 import DoctorsPage from './DoctorsPage';
 import PatientsPage from './PatientsPage';
 import BillingPage from './BillingPage';
+import PharmacyPage from './PharmacyPage';
 import SettingsPage from './SettingsPage';
 
 const PAGES = {
@@ -13,6 +14,7 @@ const PAGES = {
   doctors:      <DoctorsPage />,
   patients:     <PatientsPage />,
   billing:      <BillingPage />,
+  pharmacy:     <PharmacyPage />,
   settings:     <SettingsPage />,
 };
 

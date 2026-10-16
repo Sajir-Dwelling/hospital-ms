@@ -17,6 +17,7 @@ const NAV = [
       { key: 'doctors',   label: 'Doctors',   icon: '👨‍⚕️' },
       { key: 'patients',  label: 'Patients',  icon: '🧑‍⚕️' },
       { key: 'billing',   label: 'Billing',   icon: '💳' },
+      { key: 'pharmacy',  label: 'Pharmacy',  icon: '💊' },
     ],
   },
   {
@@ -33,6 +34,7 @@ const PAGE_TITLES = {
   doctors:      { title: 'Doctors',      sub: 'Manage doctor profiles' },
   patients:     { title: 'Patients',     sub: 'View & manage patients' },
   billing:      { title: 'Billing',      sub: 'Invoices & payments' },
+  pharmacy:     { title: 'Pharmacy',     sub: 'Medicine stock & inventory' },
   settings:     { title: 'Settings',     sub: 'System configuration' },
 };
 
